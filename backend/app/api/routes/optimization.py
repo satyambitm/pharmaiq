@@ -13,4 +13,5 @@ router = APIRouter(prefix="/api/v1", tags=["optimization"])
 @router.post("/optimize-budget", response_model=OptimizeResponse,
              summary="Scenario-based regional budget allocation under assumed response curves")
 def optimize_budget(req: OptimizeRequest, meta: Meta = Depends(get_meta)) -> dict:
-    return {"meta": meta, **optimization_service.optimize_budget(req.total_budget_cr, req.scenario, req.competitor_pressure)}
+    return {"meta": meta, **optimization_service.optimize_budget(
+        req.total_budget_cr, req.scenario, req.competitor_pressure, req.min_spend_cr, req.max_spend_cr)}

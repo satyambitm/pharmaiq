@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, replace
+
+import numpy as np
+
 from backend.app.core.errors import InvalidRequest
-from src.optimization.allocate import InfeasibleBudgetError, compare_strategies
+from src.optimization.allocate import InfeasibleBudgetError, budget_sensitivity, compare_strategies
 from src.optimization.response import DEFAULT_RESPONSES, apply_scenario
 
 LABEL = "Scenario-based simulation under assumed response curves - not a measured ROI or causal estimate."
@@ -14,10 +18,13 @@ ASSUMPTIONS = [
     "Competitor pressure p shrinks that region's alpha by a factor (1 - p).",
     "Equal split and status quo can break the regional min/max bounds; see within_bounds.",
 ]
+SENSITIVITY_POINTS = 15
 
 
-def optimize_budget(total_budget_cr: float, scenario: str, competitor_pressure: dict[str, float]) -> dict:
-    responses = apply_scenario(DEFAULT_RESPONSES, scenario, competitor_pressure)
+def optimize_budget(total_budget_cr: float, scenario: str, competitor_pressure: dict[str, float],
+                    min_spend_cr: float = 5.0, max_spend_cr: float = 30.0) -> dict:
+    bounded = tuple(replace(r, min_spend=min_spend_cr, max_spend=max_spend_cr) for r in DEFAULT_RESPONSES)
+    responses = apply_scenario(bounded, scenario, competitor_pressure)
     try:
         table = compare_strategies(total_budget_cr, responses)
     except InfeasibleBudgetError as exc:
@@ -35,10 +42,14 @@ def optimize_budget(total_budget_cr: float, scenario: str, competitor_pressure: 
                             "min_cr": r.min_cr, "max_cr": r.max_cr, "within_bounds": bool(r.within_bounds)}
                            for r in g.itertuples()],
         })
+    lo, hi = sum(r.min_spend for r in responses), sum(r.max_spend for r in responses)
+    sens = budget_sensitivity(list(np.linspace(lo, hi, SENSITIVITY_POINTS)), responses)
     return {
         "label": LABEL, "assumptions": ASSUMPTIONS, "total_budget_cr": total_budget_cr, "scenario": scenario,
-        "feasible_budget_range_cr": (sum(r.min_spend for r in responses), sum(r.max_spend for r in responses)),
+        "feasible_budget_range_cr": (lo, hi),
+        "response_curves": [{k: round(v, 4) if isinstance(v, float) else v for k, v in asdict(r).items()} for r in responses],
         "strategies": strategies,
         "optimized_vs_equal_split_cr": round(totals["optimized"] - totals["equal_split"], 3),
         "optimized_vs_status_quo_cr": round(totals["optimized"] - totals["status_quo"], 3),
+        "sensitivity": sens.round(3).to_dict("records"),
     }

@@ -33,6 +33,8 @@ async def lifespan(app: FastAPI):
     app.state.repository = app.state.bundle = None
     try:
         app.state.repository = build_repository(settings)
+        if settings.data_backend == "postgres" and settings.auto_seed_demo:
+            app.state.repository.ensure_seeded(settings.sample_data_path)
     except AppError as exc:
         app.state.startup_problems.append(exc.message)
     try:

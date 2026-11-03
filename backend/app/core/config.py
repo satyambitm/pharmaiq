@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = 2
     db_pool_timeout_seconds: int = 10
     db_connect_timeout_seconds: int = 10
+    auto_seed_demo: bool = False
 
     models_dir: Path = ROOT / "models"
     sample_data_path: Path = ROOT / "data" / "sample" / "synthetic_sales_clean.csv"

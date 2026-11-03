@@ -86,6 +86,14 @@ def test_optimizer_conserves_budget_and_labels_scenario(client):
     opt = next(s for s in body["strategies"] if s["strategy"] == "optimized")
     assert sum(a["spend_cr"] for a in opt["allocation"]) == pytest.approx(120, abs=0.01)
     assert opt["feasible"] and body["optimized_vs_equal_split_cr"] >= 0
+    assert body["feasible_budget_range_cr"] == [30, 180] and len(body["sensitivity"]) == 15
+
+
+def test_optimizer_custom_bounds(client):
+    body = client.post("/api/v1/optimize-budget",
+                       json={"total_budget_cr": 60, "min_spend_cr": 8, "max_spend_cr": 12}).json()
+    opt = next(s for s in body["strategies"] if s["strategy"] == "optimized")
+    assert all(8 - 1e-6 <= a["spend_cr"] <= 12 + 1e-6 for a in opt["allocation"])
 
 
 @pytest.mark.parametrize("payload,code", [
@@ -94,6 +102,7 @@ def test_optimizer_conserves_budget_and_labels_scenario(client):
     ({"total_budget_cr": 120, "scenario": "extreme"}, "validation_error"),
     ({"total_budget_cr": 120, "competitor_pressure": {"Atlantis": 0.1}}, "validation_error"),
     ({"total_budget_cr": 120, "competitor_pressure": {"North": 1.5}}, "validation_error"),
+    ({"total_budget_cr": 120, "min_spend_cr": 40, "max_spend_cr": 30}, "validation_error"),
 ])
 def test_optimizer_rejects_bad_input(client, payload, code):
     r = client.post("/api/v1/optimize-budget", json=payload)

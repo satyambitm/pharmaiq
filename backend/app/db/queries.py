@@ -6,6 +6,8 @@ PING = text("SELECT 1")
 
 COUNT_ROWS = text("SELECT COUNT(*) FROM monthly_sales WHERE data_source = :data_source")
 
+TABLE_EXISTS = text("SELECT to_regclass('public.monthly_sales') IS NOT NULL")
+
 # Optional filters use the "parameter IS NULL OR ..." pattern so one statement serves all cases.
 SALES_ROWS = text("""
     SELECT month_start, region_id, product_id, units_sold, unit_price_inr, gross_revenue_inr,

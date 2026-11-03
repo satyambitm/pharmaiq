@@ -8,10 +8,11 @@ __pycache__/
 # Virtual environment
 .venv/
 
-# Secrets: only .env.example is tracked
+# Secrets: only .env.example and secrets.toml.example are tracked
 .env
+**/.streamlit/secrets.toml
 
-# Generated data (reproducible from the seeded generator)
+# Generated data (reproducible from the seeded generator); data/sample/ and models/ are tracked
 data/raw/
 data/processed/
 

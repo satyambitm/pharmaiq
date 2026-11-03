@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
+from pathlib import Path
 from typing import Protocol
 
 import pandas as pd
@@ -18,6 +19,7 @@ from backend.app.core.config import Settings
 from backend.app.core.errors import ServiceUnavailable
 from backend.app.db import queries
 from src.config import DATA_SOURCE
+from src.data.load import load_clean
 from src.data.validate import read_raw, to_panel
 
 logger = logging.getLogger(__name__)
@@ -77,6 +79,21 @@ class PostgresRepository:
 
     def ping(self) -> None:
         self._read(queries.PING, {})
+
+    def ensure_seeded(self, csv_path: Path) -> bool:
+        """Load the bundled demo CSV if the sales table is missing or empty. Returns True if it loaded."""
+        try:
+            with self.engine.connect() as conn:
+                exists = conn.execute(queries.TABLE_EXISTS).scalar()
+                count = conn.execute(queries.COUNT_ROWS, {"data_source": DATA_SOURCE}).scalar() if exists else 0
+            if count:
+                return False
+            report = load_clean(self.engine, csv_path=csv_path, report_path=None)
+        except SQLAlchemyError as exc:
+            logger.error("demo_seed_failed type=%s", type(exc).__name__)
+            raise ServiceUnavailable("Database is unavailable. Please retry shortly.") from exc
+        logger.info("demo_seed_loaded rows=%s reconciled=%s", report["db_rows"], report["reconciled"])
+        return True
 
 
 class CsvRepository:

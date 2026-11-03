@@ -10,7 +10,6 @@ psycopg[binary]==3.2.13
 python-dotenv==1.2.4
 numpy==2.2.6
 pandas==2.3.3
-pyarrow==20.0.0
 scipy==1.15.3
 scikit-learn==1.7.2
 # On Linux (Render), the CPU-only wheel avoids the ~200 MB nvidia-nccl-cu12 dependency.

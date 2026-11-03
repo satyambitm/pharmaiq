@@ -1,4 +1,4 @@
-# Model card — PharmaIQ Lite+ one-month-ahead unit forecaster
+# Model card — PharmaIQ unit forecaster (1-3 months ahead)
 
 > **Synthetic demonstration.** Trained and evaluated on generated data (`synthetic_v1`). Not for real commercial or clinical decisions.
 
@@ -66,15 +66,41 @@ Backtest WAPE % (108 rows per fold):
 - Per region, the winner differs; North is best served by the seasonal naive baseline in 2025. A single overall WAPE hides this.
 - The 0.18-percentage-point WAPE gap between XGBoost and Prophet on 216 rows is small; no significance test was run, so treat the two as roughly comparable.
 
+## Multi-horizon evaluation, 1-3 months (v1.1, `ml/evaluate.py` → `models/metrics/`)
+
+Contract: forecast origins Dec 2024 – Nov 2025, targets within 2025. XGBoost uses the selected hyperparameters, refit on targets ≤ Dec 2024, and forecasts **recursively**: step 1 uses observed history only; steps 2–3 feed earlier predictions back in as lags, and exogenous inputs (spend, price, competitor index, accounts, campaign flag) are held at their origin-month values because they are unknown in advance. Prophet is refit per series at every origin on history ≤ origin and forecasts all three steps directly from the units history alone. Within each horizon, all models are scored on identical rows (`assert_same_rows`).
+
+| Months ahead | Rows | Seasonal naive WAPE % | XGBoost MAE / RMSE / WAPE % | Prophet MAE / RMSE / WAPE % |
+|---:|---:|---:|---|---|
+| 1 | 216 | 9.79 | 308.6 / 419.7 / 8.06 | **301.7 / 392.9 / 7.88** |
+| 2 | 198 | 9.58 | **304.9** / 416.3 / **7.90** | 305.2 / **397.9** / 7.91 |
+| 3 | 180 | 9.59 | 320.8 / 417.7 / 8.26 | **299.8 / 396.5 / 7.72** |
+
+- Horizon 1 reproduces the one-step scorecard exactly (same model, same rows), which checks the recursive code path.
+- XGBoost error grows slightly by month 3 (feedback of its own predictions plus held exogenous inputs); Prophet, which never relied on exogenous inputs, does not degrade. Both beat seasonal naive at every horizon.
+- 3-month WAPE % by region (XGBoost / Prophet): North 9.09 / 9.79, South 7.97 / 7.27, East 7.17 / 6.11, West 9.53 / 8.92, Central 7.89 / 5.57, Northeast 6.80 / 7.08.
+
+**80% interval calibration on 2025 (share of actuals inside the band):**
+
+| Months ahead | XGBoost | Prophet |
+|---:|---:|---:|
+| 1 | 80.6% (mean width 1,125 units) | 51.4% (522) |
+| 2 | 80.3% (1,183) | 49.0% (518) |
+| 3 | 77.2% (1,287) | 52.2% (515) |
+
+XGBoost intervals apply per-horizon 10th/90th percentile relative errors (`actual / predicted − 1`) from a separate 2024 recursive backtest (model fit on targets ≤ Dec 2023), so 2025 coverage is an out-of-sample check. Prophet's own 80% interval is far too narrow on this data; the API and dashboard report its measured coverage next to it.
+
+**Deployed models.** The served XGBoost model (`models/xgboost.joblib`) is refit on all targets through Dec 2025 with the same hyperparameters; the metrics above come from the Dec-2024 refit and are its best available estimate of accuracy. Prophet forecasts for Jan – Mar 2026 are precomputed from all 60 months (`models/prophet_forecasts.csv`) because fitting Prophet per request is too slow for a 0.1-CPU host.
+
 ## Explainability (SHAP, 2025 rows)
 Top features by mean |SHAP| (units): `lag_12` 783, `lag_1` 412, `roll_mean_12` 124, `accounts_origin` 74, `roll_mean_3` 53. These are associations in this model. Lags are highly correlated, so credit can move between them; SHAP does not show what would happen if spend were changed.
 
 ## Failure modes and limitations
 - Synthetic data with a known equation: models recovering it is expected and is not evidence about real markets.
-- One-step-ahead only; the scores are not a 3-month guarantee. The Jan 2026 forecast is illustrative, and its revenue estimate uses an assumed price that ignores the January price increase.
+- Horizons beyond 3 months are not supported or evaluated. Multi-month XGBoost forecasts assume future spend, price and competitor conditions equal the latest month.
 - XGBoost was trained on 18 series; a new region or product would only get the one-hot "unknown" (all-zero) encoding and history features.
-- No prediction intervals in v1.0.
+- Prophet's 80% interval under-covers (about 50% in 2025). XGBoost intervals are calibrated on one year (2024) of residuals and assume error ratios stay similar.
 - Prophet runtime (≈125 s for 216 refits) is roughly 200× XGBoost's.
 
 ## Reproducibility
-Seed 42, `n_jobs=1`, pinned version ranges in `requirements.txt`, package versions saved in `artifacts/metrics/run_metadata.json`. The saved model is reloaded and its predictions checked against the saved holdout predictions during training.
+Seed 42, `n_jobs=1`, exact pins in `backend/requirements.txt` and `requirements.txt`, package versions saved in `artifacts/metrics/run_metadata.json` and `models/*_metadata.json`. The saved model is reloaded and its predictions checked against the saved holdout predictions during training. The API refuses to start serving if the installed scikit-learn or XGBoost version differs from the one recorded with the model, and `models/manifest.json` records a SHA-256 for every bundle file.

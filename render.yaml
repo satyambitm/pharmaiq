@@ -1,0 +1,53 @@
+# Render Blueprint for the PharmaIQ API (https://render.com/docs/blueprint-spec).
+# Creates one free web service and one free Render Postgres instance in the same region.
+# Free Postgres expires 30 days after creation; see docs/deployment.md for the CSV fallback.
+
+services:
+  - type: web
+    name: pharmaiq-api
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - backend/**
+        - ml/**
+        - src/**
+        - models/**
+        - data/sample/**
+        - sql/**
+        - render.yaml
+        - .python-version
+      ignoredPaths:
+        - backend/tests/**
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATA_BACKEND
+        value: postgres
+      - key: AUTO_SEED_DEMO
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pharmaiq-db
+          property: connectionString
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+
+databases:
+  - name: pharmaiq-db
+    plan: free
+    region: singapore
+    databaseName: pharmaiq
+    user: pharmaiq_user
+    ipAllowList: []

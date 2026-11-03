@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from decimal import Decimal
+from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import Engine, text
@@ -42,10 +43,11 @@ def _records(df: pd.DataFrame) -> list[dict]:
     return out
 
 
-def load_clean(engine: Engine | None = None) -> dict:
+def load_clean(engine: Engine | None = None, csv_path: Path | None = None,
+               report_path: Path | None = config.METRICS_DIR / "load_reconciliation.json") -> dict:
     """Create schema/views and load the clean CSV; return a reconciliation report."""
     engine = engine or get_engine()
-    df = read_raw(config.CLEAN_CSV)
+    df = read_raw(csv_path or config.CLEAN_CSV)
     checks = run_checks(df)
     if not checks["passed"]:
         raise DataValidationError("Refusing to load: clean CSV failed validation")
@@ -70,7 +72,9 @@ def load_clean(engine: Engine | None = None) -> dict:
 
     report = reconcile(df, engine)
     report["rows_deleted_before_insert"] = int(deleted)
-    (config.METRICS_DIR / "load_reconciliation.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     logger.info("Loaded rows=%d (deleted %d first); reconciled=%s", report["db_rows"], deleted, report["reconciled"])
     if not report["reconciled"]:
         raise DataValidationError(f"Warehouse totals do not match CSV: {report}")
