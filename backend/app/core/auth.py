@@ -30,6 +30,10 @@ def get_owner(request: Request, x_api_key: str | None = Header(None, alias="X-AP
         raise AppError(403, "uploads_disabled", "Dataset uploads are disabled on this deployment.")
     if settings.uploads_mode == "local":
         return Owner(LOCAL_OWNER, "local-development")
+    return owner_from_key(settings, x_api_key)
+
+
+def owner_from_key(settings: Settings, x_api_key: str | None) -> Owner:
     if not x_api_key:
         raise Unauthorized()
     digest = hashlib.sha256(x_api_key.encode("utf-8")).hexdigest()

@@ -16,7 +16,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.app.api.routes import analytics, datasets, forecasting, health, models, optimization, segmentation
+from backend.app.api.routes import (agent, analytics, datasets, forecasting, health, models, optimization,
+                                    segmentation)
 from backend.app.core.config import Settings, get_settings
 from backend.app.core.errors import AppError, error_response, register_error_handlers
 from backend.app.core.logging import configure_logging
@@ -24,7 +25,7 @@ from backend.app.db.connection import build_repository
 from backend.app.db.datasets import DatasetStore
 from ml.model_loader import BundleError, load_bundle
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 logger = logging.getLogger("backend.app")
 UPLOAD_PATH = "/api/v1/datasets/upload"
 MULTIPART_OVERHEAD = 1024 * 1024
@@ -117,7 +118,7 @@ def create_app() -> FastAPI:
         return response
 
     register_error_handlers(app)
-    for r in (health, analytics, forecasting, segmentation, optimization, datasets, models):
+    for r in (health, analytics, forecasting, segmentation, optimization, datasets, models, agent):
         app.include_router(r.router)
     return app
 

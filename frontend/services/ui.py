@@ -13,9 +13,15 @@ REGIONS = {"R01": "North", "R02": "South", "R03": "East", "R04": "West", "R05": 
 PRODUCTS = {"P01": "Therapy A", "P02": "Therapy B", "P03": "Therapy C"}
 
 
-def page(title: str, banner: str = "synthetic") -> None:
+def page(title: str, banner: str | None = "synthetic") -> None:
     st.set_page_config(page_title=f"PharmaIQ · {title}", page_icon="💊", layout="wide")
     st.title(title)
+    if banner:
+        show_banner(banner)
+    _sidebar_status()
+
+
+def show_banner(banner: str) -> None:
     if banner == "synthetic":
         st.warning("**Synthetic demo**: every number comes from generated data (`synthetic_v1`, seed 42). "
                    "Results are illustrative. They are not real market performance, causal marketing ROI or clinical "
@@ -23,7 +29,6 @@ def page(title: str, banner: str = "synthetic") -> None:
     else:
         st.info("**Your data**: this page works on datasets you upload. They are stored separately from the synthetic "
                 "demo, which is never modified. Other pages still show the synthetic demo.", icon="📁")
-    _sidebar_status()
 
 
 def _sidebar_status() -> None:

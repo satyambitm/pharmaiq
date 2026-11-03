@@ -157,6 +157,15 @@ def delete_dataset(api_key: str | None, dataset_id: str) -> dict:
     return _request("DELETE", f"/api/v1/datasets/{dataset_id}", headers=_auth(api_key))
 
 
+def agent_status() -> dict:
+    return _request("GET", "/api/v1/agent/status")
+
+
+def agent_chat(message: str, history: list[dict], dataset_id: str | None, api_key: str | None) -> dict:
+    return _request("POST", "/api/v1/agent/chat", headers=_auth(api_key),
+                    json={"message": message, "history": history, "dataset_id": dataset_id})
+
+
 def train_models(api_key: str | None, dataset_id: str) -> dict:
     return _request("POST", "/api/v1/models/train", headers=_auth(api_key), json={"dataset_id": dataset_id})
 

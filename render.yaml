@@ -43,6 +43,15 @@ services:
         value: "1"
       - key: OPENBLAS_NUM_THREADS
         value: "1"
+      # AI Business Analyst on the synthetic demo, rate limited. The key is entered in the dashboard, never here.
+      - key: AGENT_MODE
+        value: public
+      - key: AGENT_REQUESTS_PER_HOUR
+        value: "10"
+      - key: AGENT_REQUESTS_PER_DAY
+        value: "200"
+      - key: OPENAI_API_KEY
+        sync: false
 
 databases:
   - name: pharmaiq-db

@@ -19,3 +19,6 @@ joblib==1.6.0
 # Dataset uploads: multipart form parsing and .xlsx reading.
 python-multipart==0.0.33
 openpyxl==3.1.5
+# AI Business Analyst (tool calling via the OpenAI API; the key stays server-side).
+langchain-core==1.7.4
+langchain-openai==1.7.3

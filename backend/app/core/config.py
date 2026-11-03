@@ -44,13 +44,27 @@ class Settings(BaseSettings):
     max_datasets_per_owner: int = Field(10, ge=1, le=100)
     max_training_jobs_per_day: int = Field(5, ge=1, le=100)
 
+    # AI Business Analyst. "public": anyone may ask about the synthetic demo (rate limited); "api_key": every chat
+    # needs a valid X-API-Key. Questions about an uploaded dataset always need its owner's credentials.
+    agent_mode: Literal["disabled", "public", "api_key"] = "disabled"
+    openai_api_key: SecretStr | None = None
+    agent_model: str = "gpt-4o-mini"
+    agent_max_tool_calls: int = Field(6, ge=1, le=12)
+    agent_timeout_seconds: float = Field(30.0, gt=0, le=120)
+    agent_requests_per_hour: int = Field(20, ge=1, le=1000)  # per client address, in-process
+    agent_requests_per_day: int = Field(300, ge=1, le=100_000)  # whole service, in-process
+
+    @property
+    def agent_enabled(self) -> bool:
+        return self.agent_mode != "disabled" and self.openai_api_key is not None
+
     @model_validator(mode="after")
     def _require_url_for_postgres(self) -> "Settings":
         if self.data_backend == "postgres" and self.database_url is None:
             raise ValueError("DATABASE_URL is required when DATA_BACKEND=postgres (or set DATA_BACKEND=csv)")
         if self.uploads_mode == "local" and self.environment == "production":
             raise ValueError("UPLOADS_MODE=local has no authentication and is not allowed when ENVIRONMENT=production")
-        if self.uploads_mode == "api_key":
+        if self.uploads_mode == "api_key" or self.agent_mode == "api_key":
             self.api_key_owners()  # raises on a malformed API_KEYS value
         return self
 
