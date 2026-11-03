@@ -4,7 +4,9 @@
 > Metrics, forecasts, segments and budget simulations are illustrative only. They do not reflect real
 > drug-market performance or causal marketing ROI, and nothing here is clinical guidance.
 
-**Live demo:** not deployed yet. Follow [`docs/deployment.md`](docs/deployment.md), then add the verified links here.
+**Live demo:** [Dashboard](https://pharmaiq-5dpjudncc7pnklrvckktcg.streamlit.app) · [API docs](https://pharmaiq-api.onrender.com/docs) · [API readiness](https://pharmaiq-api.onrender.com/health/ready)
+
+Both run on free tiers: the API sleeps after 15 minutes idle and takes about a minute to wake, and the dashboard hibernates after 12 hours without traffic. Deployment steps are in [`docs/deployment.md`](docs/deployment.md).
 
 Commercial analytics for a fictional company, **Aster Pharma**: sales reporting in PostgreSQL, 1–3 month unit forecasting (seasonal naive vs XGBoost vs Prophet) with calibrated intervals, K-Means market segmentation, SHAP explanations, and a constrained marketing budget simulator. A **FastAPI** backend serves everything, and a **Streamlit** frontend calls it over HTTP.
 
