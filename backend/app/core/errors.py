@@ -29,11 +29,32 @@ class InvalidRequest(AppError):
         super().__init__(422, "invalid_request", message)
 
 
+class NotFound(AppError):
+    """Also used for resources owned by someone else, so their existence is not revealed."""
+
+    def __init__(self, message: str = "Not found") -> None:
+        super().__init__(404, "not_found", message)
+
+
+class Unauthorized(AppError):
+    def __init__(self, message: str = "A valid API key is required") -> None:
+        super().__init__(401, "unauthorized", message)
+
+
+class Conflict(AppError):
+    def __init__(self, message: str) -> None:
+        super().__init__(409, "conflict", message)
+
+
 def _body(request: Request, code: str, message: str, details: object | None = None) -> dict:
     body = {"error": {"code": code, "message": message, "request_id": getattr(request.state, "request_id", None)}}
     if details is not None:
         body["error"]["details"] = details
     return body
+
+
+def error_response(request: Request, status_code: int, code: str, message: str) -> JSONResponse:
+    return JSONResponse(status_code=status_code, content=_body(request, code, message))
 
 
 def register_error_handlers(app: FastAPI) -> None:

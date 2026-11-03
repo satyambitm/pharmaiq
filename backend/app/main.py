@@ -13,22 +13,49 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 
-from backend.app.api.routes import analytics, forecasting, health, optimization, segmentation
-from backend.app.core.config import get_settings
-from backend.app.core.errors import AppError, register_error_handlers
+from backend.app.api.routes import analytics, datasets, forecasting, health, optimization, segmentation
+from backend.app.core.config import Settings, get_settings
+from backend.app.core.errors import AppError, error_response, register_error_handlers
 from backend.app.core.logging import configure_logging
 from backend.app.db.connection import build_repository
+from backend.app.db.datasets import DatasetStore
 from ml.model_loader import BundleError, load_bundle
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 logger = logging.getLogger("backend.app")
+UPLOAD_PATH = "/api/v1/datasets/upload"
+MULTIPART_OVERHEAD = 1024 * 1024
+MAX_JSON_BODY = 1024 * 1024
+
+
+def _dataset_store(settings: Settings, repository) -> tuple[DatasetStore | None, str | None]:
+    """Uploads are optional: a storage problem disables them without affecting the demo endpoints."""
+    if settings.uploads_mode == "disabled":
+        return None, "Dataset uploads are disabled on this deployment."
+    url = settings.dataset_store_sqlalchemy_url
+    if url is None:
+        return None, "Uploads need a database: set DATABASE_URL (or DATASET_STORE_URL)."
+    try:
+        engine = (repository.engine if settings.dataset_store_url is None and getattr(repository, "engine", None)
+                  else create_engine(url, pool_pre_ping=True))
+        store = DatasetStore(engine)
+        store.ensure_schema()
+        return store, None
+    except AppError as exc:
+        return None, exc.message
+    except SQLAlchemyError as exc:  # e.g. a malformed DATASET_STORE_URL; never log the URL itself
+        logger.error("dataset_store_init_failed type=%s", type(exc).__name__)
+        return None, "Dataset storage could not be initialised."
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.log_level)
+    app.state.settings = settings
     app.state.startup_problems = []
     app.state.repository = app.state.bundle = None
     try:
@@ -42,10 +69,14 @@ async def lifespan(app: FastAPI):
     except BundleError as exc:
         logger.error("bundle_load_failed reason=%s", exc)
         app.state.startup_problems.append("Model bundle failed to load")
-    logger.info("startup environment=%s data_backend=%s models_loaded=%s", settings.environment,
-                settings.data_backend, app.state.bundle is not None)
+    app.state.dataset_store, app.state.dataset_store_problem = _dataset_store(settings, app.state.repository)
+    logger.info("startup environment=%s data_backend=%s models_loaded=%s uploads=%s store=%s", settings.environment,
+                settings.data_backend, app.state.bundle is not None, settings.uploads_mode,
+                app.state.dataset_store is not None)
     yield
-    repo = app.state.repository
+    repo, store = app.state.repository, app.state.dataset_store
+    if store is not None and store.engine is not getattr(repo, "engine", None):
+        store.engine.dispose()
     if repo is not None and hasattr(repo, "engine"):
         repo.engine.dispose()
 
@@ -61,6 +92,20 @@ def create_app() -> FastAPI:
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     @app.middleware("http")
+    async def body_size_limit(request: Request, call_next):
+        """Reject oversized bodies before they are parsed (multipart files are spooled to disk otherwise)."""
+        if request.method in ("POST", "PUT", "PATCH"):
+            settings: Settings = request.app.state.settings
+            limit = settings.max_upload_bytes + MULTIPART_OVERHEAD if request.url.path == UPLOAD_PATH else MAX_JSON_BODY
+            length = request.headers.get("content-length")
+            if length is None and request.headers.get("transfer-encoding"):
+                return error_response(request, 411, "length_required", "Send a Content-Length header.")
+            if length is not None and (not length.isdigit() or int(length) > limit):
+                return error_response(request, 413, "payload_too_large",
+                                      f"The request body exceeds the {limit / 1024 / 1024:.1f} MB limit.")
+        return await call_next(request)
+
+    @app.middleware("http")
     async def request_context(request: Request, call_next):
         request.state.request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
         start = time.perf_counter()
@@ -72,7 +117,7 @@ def create_app() -> FastAPI:
         return response
 
     register_error_handlers(app)
-    for r in (health, analytics, forecasting, segmentation, optimization):
+    for r in (health, analytics, forecasting, segmentation, optimization, datasets):
         app.include_router(r.router)
     return app
 

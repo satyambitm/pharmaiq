@@ -116,6 +116,47 @@ def model_insights() -> dict:
     return _request("GET", "/api/v1/model-insights")
 
 
+# ---------------------------------------------------------------- user datasets
+# Never cached: responses are private to the caller's access key and change as the user works.
+
+def _auth(api_key: str | None) -> dict:
+    return {"X-API-Key": api_key} if api_key else {}
+
+
+def dataset_settings() -> dict:
+    return _request("GET", "/api/v1/datasets/settings")
+
+
+def upload_dataset(api_key: str | None, file_name: str, content: bytes, dataset_name: str | None) -> dict:
+    return _request("POST", "/api/v1/datasets/upload", headers=_auth(api_key),
+                    files={"file": (file_name, content, "application/octet-stream")},
+                    data={"dataset_name": dataset_name or ""})
+
+
+def list_datasets(api_key: str | None) -> dict:
+    return _request("GET", "/api/v1/datasets", headers=_auth(api_key), params={"limit": 100})
+
+
+def dataset_detail(api_key: str | None, dataset_id: str) -> dict:
+    return _request("GET", f"/api/v1/datasets/{dataset_id}", headers=_auth(api_key))
+
+
+def dataset_profile(api_key: str | None, dataset_id: str) -> dict:
+    return _request("GET", f"/api/v1/datasets/{dataset_id}/profile", headers=_auth(api_key))
+
+
+def validate_dataset(api_key: str | None, dataset_id: str, body: dict) -> dict:
+    return _request("POST", f"/api/v1/datasets/{dataset_id}/validate", headers=_auth(api_key), json=body)
+
+
+def activate_dataset(api_key: str | None, dataset_id: str) -> dict:
+    return _request("POST", f"/api/v1/datasets/{dataset_id}/activate", headers=_auth(api_key))
+
+
+def delete_dataset(api_key: str | None, dataset_id: str) -> dict:
+    return _request("DELETE", f"/api/v1/datasets/{dataset_id}", headers=_auth(api_key))
+
+
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def optimize_budget(total_budget_cr: float, scenario: str, pressure: tuple[tuple[str, float], ...],
                     min_spend_cr: float, max_spend_cr: float) -> dict:

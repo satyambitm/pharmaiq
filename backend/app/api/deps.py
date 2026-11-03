@@ -6,6 +6,7 @@ from fastapi import Request
 
 from backend.app.core.errors import ServiceUnavailable
 from backend.app.db.connection import SalesRepository
+from backend.app.db.datasets import DatasetStore
 from backend.app.schemas.common import Meta
 from ml.model_loader import ModelBundle
 
@@ -22,6 +23,14 @@ def get_bundle(request: Request) -> ModelBundle:
     if bundle is None:
         raise ServiceUnavailable("Model bundle is not loaded")
     return bundle
+
+
+def get_dataset_store(request: Request) -> DatasetStore:
+    store = getattr(request.app.state, "dataset_store", None)
+    if store is None:
+        raise ServiceUnavailable(getattr(request.app.state, "dataset_store_problem", None)
+                                 or "Dataset storage is not available")
+    return store
 
 
 def get_meta(request: Request) -> Meta:
