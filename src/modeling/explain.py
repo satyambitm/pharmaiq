@@ -52,7 +52,8 @@ def save_shap_artifacts(pipe: Pipeline, test_rows: pd.DataFrame, example_index: 
 
     row = test_rows.iloc[example_index]
     shap.plots.waterfall(values[example_index], max_display=10, show=False)
-    plt.title(f"Local explanation: {row['region_id']}/{row['product_id']} target {row['target_month']:%Y-%m}", fontsize=10)
+    plt.title(f"Local explanation: {row['region_id']}/{row['product_id']} target {row['target_month']:%Y-%m}",
+              fontsize=10, pad=28)
     plt.tight_layout()
     plt.savefig(config.FIGURES_DIR / "shap_waterfall_example.png", dpi=120)
     plt.close("all")
