@@ -16,3 +16,4 @@ All steps were run on Windows 11, Python 3.11.9, in a single session (compressed
 | 10 | Training | `python scripts/train_all.py` → 2025 WAPE: Prophet 7.88, XGBoost 8.06, last-month 9.58, seasonal 9.79; Prophet 540 refits total |
 | 11 | SHAP figure fix | Waterfall title overlapped the f(x) label; added title padding and regenerated |
 | 12 | Dashboard | `streamlit run dashboard/app.py`; all 6 pages loaded with no exceptions; infeasible budget (₹10 cr) shows the feasible-range error |
+| 13 | Fresh-clone check | `git clone` to a temp folder → bootstrap (same clean SHA-256 `dabefbbc…`, loader deleted and reloaded 1,080 rows, reconciled), build_reports exit 0, `train_all.py --skip-prophet` exit 0 in 27 s, `pytest` 25 passed; XGBoost fold and test scores bit-identical to the original run |

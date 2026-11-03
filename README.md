@@ -87,7 +87,7 @@ pytest                                # all tests (DB tests skip if Postgres is 
 streamlit run dashboard/app.py        # http://localhost:8501
 ```
 
-Options: `bootstrap.py --skip-db` and `build_reports.py --skip-db` work without Postgres. `train_all.py --skip-prophet` runs in under 30 s.
+Options: `bootstrap.py --skip-db` and `build_reports.py --skip-db` work without Postgres. `train_all.py --skip-prophet` runs in about 30 s.
 
 Individual modules can also be run directly: `python -m src.data.generate`, `python -m src.data.validate`, `python -m src.data.load`.
 
