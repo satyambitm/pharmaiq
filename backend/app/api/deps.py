@@ -7,6 +7,7 @@ from fastapi import Request
 from backend.app.core.errors import ServiceUnavailable
 from backend.app.db.connection import SalesRepository
 from backend.app.db.datasets import DatasetStore
+from backend.app.db.training import TrainingStore
 from backend.app.schemas.common import Meta
 from ml.model_loader import ModelBundle
 
@@ -31,6 +32,11 @@ def get_dataset_store(request: Request) -> DatasetStore:
         raise ServiceUnavailable(getattr(request.app.state, "dataset_store_problem", None)
                                  or "Dataset storage is not available")
     return store
+
+
+def get_training_store(request: Request) -> TrainingStore:
+    store = get_dataset_store(request)
+    return TrainingStore(store.engine)
 
 
 def get_meta(request: Request) -> Meta:

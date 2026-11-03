@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 from services import api_client
@@ -135,15 +136,108 @@ def show_report(report: dict, monthly_preview: list[dict] | None = None) -> None
         st.dataframe(pd.DataFrame(monthly_preview), hide_index=True, width="stretch")
 
 
+MODEL_LABELS = {"xgboost": "XGBoost", "naive_last_month": "Naive (last month)", "seasonal_naive": "Seasonal naive",
+                "xgboost_on_seasonal_rows": "XGBoost (rows with a year of history)"}
+
+
+def show_version(v: dict) -> None:
+    res = v["results"]
+    fc = res["forecasting"]
+    ev = fc["evaluation"]
+    st.markdown(f"**Model version** `{v['version_id'][:8]}` · trained {v['created_at'][:16].replace('T', ' ')} UTC · "
+                f"recommended: **{MODEL_LABELS.get(fc['recommended_model'], fc['recommended_model'])}**")
+    st.caption(f"Holdout: one-month-ahead predictions for the last {ev['holdout_months']} months "
+               f"({ev['test_start']} onward), models fitted only on data up to {ev['train_end']}.")
+    rows = [{"model": MODEL_LABELS.get(m, m), **s} for m, s in ev["metrics"].items()]
+    if res["prophet"]["status"] == "ok":
+        rows.append({"model": f"Prophet ({len(res['prophet']['series'])} longest series, multi-month)",
+                     **res["prophet"]["metrics"]})
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    st.caption("MAE and RMSE are in units sold per region/product/month. WAPE = total absolute error ÷ total units.")
+    for n in fc["notes"]:
+        st.info(n)
+    if res["prophet"]["status"] == "ok":
+        st.caption(f"Prophet: {res['prophet']['evaluation']}; not directly comparable with the one-month-ahead rows.")
+    else:
+        st.caption(f"Prophet: {res['prophet']['reason']}")
+
+    t1, t2, t3 = st.tabs(["Forecasts", "Feature influence (SHAP)", "Segments"])
+    with t1:
+        f = pd.DataFrame(fc["forecasts"])
+        f = f[f["model"] == fc["recommended_model"]]
+        st.dataframe(f.pivot_table(index=["region", "product"], columns="target_month", values="y_pred").round(1),
+                     width="stretch")
+        st.caption(fc["forecast_note"])
+    with t2:
+        shap = res["explainability"]
+        if shap["status"] == "ok":
+            imp = pd.DataFrame(shap["global_importance"])
+            st.plotly_chart(px.bar(imp.sort_values("mean_abs_shap"), x="mean_abs_shap", y="feature", orientation="h",
+                                   labels={"mean_abs_shap": "Mean |SHAP| (units)", "feature": ""},
+                                   title=f"Global importance ({shap['method']})"), width="stretch")
+        else:
+            st.write(shap["reason"])
+        st.warning(shap["caveat"])
+    with t3:
+        seg = res["segmentation"]
+        if seg["status"] != "ok":
+            st.write(seg["reason"])
+        else:
+            chosen = next(t for t in seg["k_selection"] if t["chosen"])
+            st.write(f"K-Means with k = {seg['k']} (silhouette {chosen['silhouette']:.2f}) on "
+                     f"{', '.join(seg['features_used'])}.")
+            if seg["features_omitted"]:
+                st.caption(f"Not used (missing for some cells): {', '.join(seg['features_omitted'])}")
+            st.dataframe(pd.DataFrame(seg["profiles"]), hide_index=True, width="stretch")
+            with st.expander("Region/product cells and their segment"):
+                st.dataframe(pd.DataFrame(seg["cells"]), hide_index=True, width="stretch")
+            st.caption(seg["note"])
+
+
+def show_training(dataset_id: str) -> None:
+    st.subheader("Models for this dataset")
+    jobs = call(api_client.training_jobs, key, dataset_id, spinner="Loading training status...")["items"]
+    versions = call(api_client.model_versions, key, dataset_id, spinner="Loading model versions...")["items"]
+    active = next((j for j in jobs if j["status"] in ("queued", "running")), None)
+    if active:
+        st.info(f"Training is **{active['status']}** (requested {active['requested_at'][:16].replace('T', ' ')} UTC). "
+                "It runs in a separate worker process, usually within a few minutes once the worker is running.")
+        if st.button("Refresh status"):
+            st.rerun()
+    else:
+        last = jobs[0] if jobs else None
+        if last and last["status"] == "failed":
+            st.error(f"The last training attempt failed: {last['error']}")
+        if st.button("Train models on this dataset", type="primary"):
+            try:
+                with st.spinner("Queueing..."):
+                    res = api_client.train_models(key, dataset_id)
+                st.success(res["message"])
+                st.rerun()
+            except api_client.ApiError as exc:
+                st.warning(exc.message)
+        st.caption("Fits XGBoost (with a naive and seasonal-naive baseline), optional Prophet, and K-Means segments "
+                   "on this dataset only. Training the same data twice is refused because it would give the same result.")
+    if not versions:
+        if not active:
+            st.caption("No models trained yet.")
+        return
+    picked = st.selectbox("Model version", [v["version_id"] for v in versions],
+                          format_func=lambda i: next(f"{v['created_at'][:16].replace('T', ' ')} · {v['recommended_model']}"
+                                                     for v in versions if v["version_id"] == i))
+    show_version(call(api_client.model_version, key, picked, spinner="Loading results..."))
+
+
 # ---------------------------------------------------------------- ingested / validated dataset
 if meta["status"] == "ready":
     detail = call(api_client.dataset_detail, key, selected, spinner="Loading the quality report...")
     st.success(f"Ingested {meta['row_count']:,} monthly rows covering {meta['date_start']} to {meta['date_end']}.")
     st.session_state["dataset_id"] = selected
-    st.info("Training forecasting and segmentation models on uploaded data is the next milestone and is not available "
-            "yet. The forecasting, segmentation and optimizer pages still use the synthetic demo.")
-    with st.expander("Quality report", expanded=True):
+    st.caption("The forecasting, segmentation and optimizer pages still show the synthetic demo; results for this "
+               "dataset appear below.")
+    with st.expander("Quality report", expanded=False):
         show_report(detail["report"])
+    show_training(selected)
     st.stop()
 
 # ---------------------------------------------------------------- mapping and validation

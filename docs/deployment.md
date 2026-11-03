@@ -90,6 +90,11 @@ If `/health/ready` returns 503, its `problems` list says why (database unreachab
 
 To change the API URL later: App → Settings → Secrets, edit, save. The app restarts.
 
+After a push, Community Cloud pulls the new code but can keep already-imported modules such as
+`frontend/services/ui.py` in memory, which shows up as errors like `unexpected keyword argument`. Fix: **Manage app →
+⋮ → Reboot app**. Render may also not auto-deploy a push; use **Manual Deploy → Deploy latest commit** and check
+`/health/ready` and the version in `/docs` afterwards.
+
 ## 5. Test the deployed application
 
 - The sidebar shows `API: https://<api>...` and **Backend ready · postgres · 2021-01..2025-12**.

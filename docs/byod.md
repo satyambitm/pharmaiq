@@ -90,6 +90,50 @@ python scripts/make_api_key.py alice
 | `MAX_UPLOAD_MB` | `5` | 0–50 |
 | `MAX_UPLOAD_ROWS` | `200000` | 10–1,000,000 |
 | `MAX_DATASETS_PER_OWNER` | `10` | 1–100 |
+| `MAX_TRAINING_JOBS_PER_DAY` | `5` | Training requests per owner in any 24 hours, 1–100 |
+
+## Training models on an uploaded dataset
+
+Once a dataset is ingested, **Train models on this dataset** on page 6 (or `POST /api/v1/models/train` with
+`{"dataset_id": ...}`) queues a job. The API never fits models itself: not in a request, not at startup. A separate
+worker process does the training:
+
+```powershell
+# same DATASET_STORE_URL / DATABASE_URL as the API; needs the root requirements.txt (xgboost, scikit-learn, prophet)
+python -m ml.byod_worker            # poll every 15 s
+python -m ml.byod_worker --once     # take at most one job and exit (handy for a scheduled task)
+python -m ml.byod_worker --no-prophet
+```
+
+The worker can run on a laptop pointed at the Render database's **external** connection string, or as a separate
+paid Render background worker. The queue lives in Postgres (`training_jobs`), so jobs survive restarts; a claimed
+job whose worker stops sending heartbeats for 10 minutes is requeued, and failed after 3 attempts. Two workers can
+never take the same job (the claim is a conditional `UPDATE ... WHERE status = 'queued'`).
+
+What one job trains, on that dataset only (seed 42, deterministic):
+
+| Model | When it is skipped |
+| --- | --- |
+| Naive (last month) and seasonal naive baselines | Never; seasonal naive needs 12 months of history per row |
+| XGBoost on lags, rolling means, calendar terms, region, product and mapped drivers | Median history under 12 months per series, or under 40 training rows |
+| TreeSHAP global importance (XGBoost `pred_contribs`) | When XGBoost is skipped |
+| Prophet per series, 80% intervals | Prophet not installed, or no series with 24+ months |
+| K-Means segments of region/product cells | Fewer than 3 regions or 6 cells |
+
+Evaluation is a time-based holdout: the last 6 months (3 when the data spans under 30 months), one-month-ahead,
+with models fitted only on earlier data. MAE, RMSE, WAPE and bias are reported per model; XGBoost is recommended
+only when it beats the naive forecast on WAPE. Prophet is scored as a multi-month forecast from the cutoff, so its
+row is not directly comparable. Drivers that are not mapped or too sparse are listed and left out; nothing is
+imputed. SHAP results carry the caveat that they describe model associations, not causal effects or ROI.
+
+Results (metrics, forecasts, SHAP, segments, notes, package versions) are stored as JSON in `model_versions` and
+served by `GET /api/v1/models/versions` and `/versions/{id}`. The fitted pipeline is stored alongside as a joblib
+blob for audit; the API never loads it. Every read is filtered by owner.
+
+Retraining is refused (409) when a version already exists for the same fingerprint: file hash + mapping + training
+code version (`src/training/__init__.py`). Changing the mapping requires a new upload, so in practice each dataset
+is trained once per release of the training code. A job whose dataset changed after queueing is failed rather than
+trained on different data.
 
 ## Running locally
 
@@ -116,6 +160,9 @@ They are recorded in `schema_migrations` as `001_datasets`:
 
 The demo tables are untouched. Deleting a dataset deletes its rows in all three tables.
 
+Migration `002_training` adds `training_jobs` (the queue) and `model_versions` (results JSON plus the artifact).
+Deleting a dataset also deletes its jobs and model versions.
+
 ## Deployment and rollback
 
 The public Render deployment keeps `UPLOADS_MODE` unset, which means `disabled`, so this release changes nothing
@@ -127,6 +174,8 @@ Rollback:
 
 1. Set `UPLOADS_MODE=disabled` (or unset it) and redeploy. Upload endpoints stop immediately; the demo is
    unaffected.
-2. To remove stored uploads, run against the database:
-   `DROP TABLE IF EXISTS dataset_rows, dataset_files, datasets, schema_migrations;`
-3. To roll back the code, revert the release commit. The demo tables and endpoints are unchanged by this release.
+2. To remove only training data (queue and model versions), stop any worker and run:
+   `DROP TABLE IF EXISTS model_versions, training_jobs; DELETE FROM schema_migrations WHERE version = '002_training';`
+3. To remove all stored uploads, run against the database:
+   `DROP TABLE IF EXISTS model_versions, training_jobs, dataset_rows, dataset_files, datasets, schema_migrations;`
+4. To roll back the code, revert the release commit. The demo tables and endpoints are unchanged by this release.

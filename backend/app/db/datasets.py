@@ -28,7 +28,7 @@ from backend.app.core.errors import ServiceUnavailable
 from src.ingest.fields import MONTHLY_COLUMNS
 
 logger = logging.getLogger(__name__)
-MIGRATION = "001_datasets"
+MIGRATIONS = ("001_datasets", "002_training")
 JsonType = JSON().with_variant(JSONB(), "postgresql")
 metadata = MetaData()
 
@@ -97,13 +97,17 @@ class DatasetStore:
         self.engine = engine
 
     def ensure_schema(self) -> None:
-        """Idempotent migration: create missing tables and record the migration once."""
+        """Idempotent, additive migrations: create missing tables and record each migration once."""
+        from backend.app.db import training  # noqa: F401  (registers the training tables on `metadata`)
+
         with _guard("migration"):
             metadata.create_all(self.engine, checkfirst=True)
             with self.engine.begin() as conn:
-                if conn.execute(select(schema_migrations.c.version).where(schema_migrations.c.version == MIGRATION)).first() is None:
-                    conn.execute(insert(schema_migrations).values(version=MIGRATION, applied_at=_now()))
-                    logger.info("migration_applied version=%s", MIGRATION)
+                applied = set(conn.execute(select(schema_migrations.c.version)).scalars())
+                for version in MIGRATIONS:
+                    if version not in applied:
+                        conn.execute(insert(schema_migrations).values(version=version, applied_at=_now()))
+                        logger.info("migration_applied version=%s", version)
 
     def ping(self) -> None:
         with _guard("ping"), self.engine.connect() as conn:
@@ -183,12 +187,17 @@ class DatasetStore:
         return df
 
     def delete(self, owner_id: str, dataset_id: str) -> bool:
-        """Remove the dataset, its file and rows. Explicit deletes so SQLite (tests) matches PostgreSQL cascades."""
+        """Remove the dataset, its file, rows, jobs and model versions. Explicit deletes so SQLite (tests) matches
+        PostgreSQL cascades."""
+        from backend.app.db.training import model_versions, training_jobs
+
         with _guard("delete"), self.engine.begin() as conn:
             owned = conn.execute(select(datasets.c.dataset_id).where(datasets.c.dataset_id == dataset_id,
                                                                       datasets.c.owner_id == owner_id)).first()
             if owned is None:
                 return False
+            conn.execute(delete(model_versions).where(model_versions.c.dataset_id == dataset_id))
+            conn.execute(delete(training_jobs).where(training_jobs.c.dataset_id == dataset_id))
             conn.execute(delete(dataset_rows).where(dataset_rows.c.dataset_id == dataset_id))
             conn.execute(delete(dataset_files).where(dataset_files.c.dataset_id == dataset_id))
             conn.execute(delete(datasets).where(datasets.c.dataset_id == dataset_id))

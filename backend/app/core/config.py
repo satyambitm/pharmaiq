@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     max_upload_mb: float = Field(5.0, gt=0, le=50)
     max_upload_rows: int = Field(200_000, ge=10, le=1_000_000)
     max_datasets_per_owner: int = Field(10, ge=1, le=100)
+    max_training_jobs_per_day: int = Field(5, ge=1, le=100)
 
     @model_validator(mode="after")
     def _require_url_for_postgres(self) -> "Settings":

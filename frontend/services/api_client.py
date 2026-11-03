@@ -157,6 +157,22 @@ def delete_dataset(api_key: str | None, dataset_id: str) -> dict:
     return _request("DELETE", f"/api/v1/datasets/{dataset_id}", headers=_auth(api_key))
 
 
+def train_models(api_key: str | None, dataset_id: str) -> dict:
+    return _request("POST", "/api/v1/models/train", headers=_auth(api_key), json={"dataset_id": dataset_id})
+
+
+def training_jobs(api_key: str | None, dataset_id: str) -> dict:
+    return _request("GET", "/api/v1/models/jobs", headers=_auth(api_key), params={"dataset_id": dataset_id})
+
+
+def model_versions(api_key: str | None, dataset_id: str) -> dict:
+    return _request("GET", "/api/v1/models/versions", headers=_auth(api_key), params={"dataset_id": dataset_id})
+
+
+def model_version(api_key: str | None, version_id: str) -> dict:
+    return _request("GET", f"/api/v1/models/versions/{version_id}", headers=_auth(api_key))
+
+
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def optimize_budget(total_budget_cr: float, scenario: str, pressure: tuple[tuple[str, float], ...],
                     min_spend_cr: float, max_spend_cr: float) -> dict:
