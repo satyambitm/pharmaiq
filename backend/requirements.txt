@@ -1,0 +1,17 @@
+# FastAPI inference service (deployed to Render). No training libraries here.
+# scikit-learn and xgboost are pinned exactly: saved models must be loaded by the
+# same versions that trained them.
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
+pydantic-settings==2.16.2
+sqlalchemy==2.0.55
+psycopg[binary]==3.2.13
+python-dotenv==1.2.4
+numpy==2.2.6
+pandas==2.3.3
+pyarrow==20.0.0
+scipy==1.15.3
+scikit-learn==1.7.2
+xgboost==3.0.5
+joblib==1.6.0
