@@ -13,5 +13,7 @@ pandas==2.3.3
 pyarrow==20.0.0
 scipy==1.15.3
 scikit-learn==1.7.2
-xgboost==3.0.5
+# On Linux (Render), the CPU-only wheel avoids the ~200 MB nvidia-nccl-cu12 dependency.
+xgboost==3.0.5; sys_platform != "linux"
+xgboost-cpu==3.0.5; sys_platform == "linux"
 joblib==1.6.0

@@ -1,0 +1,7 @@
+model,horizon_months,nominal,empirical_coverage,n,mean_width_units
+prophet,1,0.8,0.5139,216,521.6
+xgboost,1,0.8,0.8056,216,1125.0
+prophet,2,0.8,0.4899,198,518.1
+xgboost,2,0.8,0.803,198,1183.1
+prophet,3,0.8,0.5222,180,515.3
+xgboost,3,0.8,0.7722,180,1287.0

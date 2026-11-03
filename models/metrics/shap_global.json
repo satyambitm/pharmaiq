@@ -1,0 +1,69 @@
+{
+  "model": "xgboost (fit on targets <= 2024-12)",
+  "rows_explained": 216,
+  "rows": "2025 one-step-ahead holdout rows",
+  "unit": "units sold",
+  "caveat": "SHAP values describe this model's predictions (associations), not causal effects. Correlated lag features can share or swap credit.",
+  "importance": [
+    {
+      "feature": "lag_12",
+      "mean_abs_shap": 782.611
+    },
+    {
+      "feature": "lag_1",
+      "mean_abs_shap": 412.43
+    },
+    {
+      "feature": "roll_mean_12",
+      "mean_abs_shap": 123.74
+    },
+    {
+      "feature": "accounts_origin",
+      "mean_abs_shap": 74.425
+    },
+    {
+      "feature": "roll_mean_3",
+      "mean_abs_shap": 52.792
+    },
+    {
+      "feature": "lag_2",
+      "mean_abs_shap": 42.69
+    },
+    {
+      "feature": "month_cos",
+      "mean_abs_shap": 30.93
+    },
+    {
+      "feature": "roll_std_3",
+      "mean_abs_shap": 27.134
+    },
+    {
+      "feature": "price_origin",
+      "mean_abs_shap": 24.476
+    },
+    {
+      "feature": "spend_sum_3",
+      "mean_abs_shap": 24.429
+    },
+    {
+      "feature": "month_sin",
+      "mean_abs_shap": 21.029
+    },
+    {
+      "feature": "spend_origin",
+      "mean_abs_shap": 19.753
+    },
+    {
+      "feature": "roll_std_12",
+      "mean_abs_shap": 19.617
+    },
+    {
+      "feature": "competitor_origin",
+      "mean_abs_shap": 19.165
+    },
+    {
+      "feature": "lag_3",
+      "mean_abs_shap": 16.129
+    }
+  ]
+}

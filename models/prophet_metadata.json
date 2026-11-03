@@ -1,0 +1,23 @@
+{
+  "model_name": "prophet",
+  "model_version": "prophet-gen-eq-1.0-origin202512",
+  "trained_at_utc": "2026-11-03T12:20:55+00:00",
+  "forecast_origin": "2025-12-01",
+  "horizon_months": 3,
+  "params": {
+    "yearly_seasonality": true,
+    "weekly_seasonality": false,
+    "daily_seasonality": false,
+    "seasonality_mode": "additive"
+  },
+  "interval_width": 0.8,
+  "interval_method": "Prophet uncertainty interval (trend + observation noise simulation)",
+  "fit_seconds_total": 11.63,
+  "n_series": 18,
+  "packages": {
+    "python": "3.11.9",
+    "prophet": "1.1.7",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6"
+  }
+}

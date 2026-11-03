@@ -1,0 +1,155 @@
+[
+  {
+    "region_id": "R01",
+    "product_id": "P01",
+    "target_month": "2025-12-01",
+    "actual_units": 6212.0,
+    "base_value": 3351.15,
+    "prediction": 6314.62,
+    "contributions": [
+      {
+        "feature": "lag_12",
+        "feature_value": 5800.0,
+        "shap": 1526.64
+      },
+      {
+        "feature": "lag_1",
+        "feature_value": 6437.0,
+        "shap": 921.41
+      },
+      {
+        "feature": "roll_mean_12",
+        "feature_value": 7011.6667,
+        "shap": 303.96
+      },
+      {
+        "feature": "accounts_origin",
+        "feature_value": 245.0,
+        "shap": 124.69
+      },
+      {
+        "feature": "roll_mean_3",
+        "feature_value": 6107.0,
+        "shap": 117.25
+      },
+      {
+        "feature": "lag_2",
+        "feature_value": 6217.0,
+        "shap": 56.48
+      },
+      {
+        "feature": "roll_std_3",
+        "feature_value": 396.6106,
+        "shap": 54.74
+      },
+      {
+        "feature": "month_cos",
+        "feature_value": 1.0,
+        "shap": -48.35
+      }
+    ],
+    "other_features_shap": -93.35
+  },
+  {
+    "region_id": "R01",
+    "product_id": "P02",
+    "target_month": "2025-12-01",
+    "actual_units": 4801.0,
+    "base_value": 3351.15,
+    "prediction": 4580.91,
+    "contributions": [
+      {
+        "feature": "lag_12",
+        "feature_value": 4299.0,
+        "shap": 731.31
+      },
+      {
+        "feature": "lag_1",
+        "feature_value": 4307.0,
+        "shap": 287.43
+      },
+      {
+        "feature": "roll_mean_12",
+        "feature_value": 5091.5833,
+        "shap": 121.59
+      },
+      {
+        "feature": "lag_2",
+        "feature_value": 6371.0,
+        "shap": 117.31
+      },
+      {
+        "feature": "accounts_origin",
+        "feature_value": 152.0,
+        "shap": 70.9
+      },
+      {
+        "feature": "roll_mean_3",
+        "feature_value": 5584.6667,
+        "shap": 67.1
+      },
+      {
+        "feature": "month_cos",
+        "feature_value": 1.0,
+        "shap": -60.9
+      },
+      {
+        "feature": "lag_3",
+        "feature_value": 6076.0,
+        "shap": -55.62
+      }
+    ],
+    "other_features_shap": -49.35
+  },
+  {
+    "region_id": "R01",
+    "product_id": "P03",
+    "target_month": "2025-12-01",
+    "actual_units": 3205.0,
+    "base_value": 3351.15,
+    "prediction": 3096.83,
+    "contributions": [
+      {
+        "feature": "lag_12",
+        "feature_value": 3115.0,
+        "shap": -227.64
+      },
+      {
+        "feature": "lag_1",
+        "feature_value": 2591.0,
+        "shap": -172.53
+      },
+      {
+        "feature": "roll_mean_12",
+        "feature_value": 2681.1667,
+        "shap": 75.75
+      },
+      {
+        "feature": "accounts_origin",
+        "feature_value": 69.0,
+        "shap": -55.56
+      },
+      {
+        "feature": "month_cos",
+        "feature_value": 1.0,
+        "shap": -47.44
+      },
+      {
+        "feature": "roll_mean_3",
+        "feature_value": 2863.6667,
+        "shap": 43.29
+      },
+      {
+        "feature": "lag_2",
+        "feature_value": 3405.0,
+        "shap": 36.15
+      },
+      {
+        "feature": "roll_std_3",
+        "feature_value": 468.8127,
+        "shap": 24.07
+      }
+    ],
+    "other_features_shap": 69.58
+  }
+]

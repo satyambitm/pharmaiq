@@ -1,0 +1,109 @@
+{
+  "created_at_utc": "2026-11-03T12:27:51+00:00",
+  "data_version": "synthetic_v1",
+  "seed": 42,
+  "packages": {
+    "python": "3.11.9",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.7.2",
+    "xgboost": "3.0.5",
+    "scipy": "1.15.3",
+    "joblib": "1.6.0",
+    "prophet": "1.1.7",
+    "shap": "0.48.0"
+  },
+  "files": [
+    {
+      "path": "k_selection.csv",
+      "bytes": 307,
+      "sha256": "36ac0ae6ad5f5e2d65f3c74ea1df4b93b3b0aa628c03cb528b20c5c370f2c054"
+    },
+    {
+      "path": "kmeans.joblib",
+      "bytes": 2181,
+      "sha256": "37dde61d6f6a96cb1f2fc7457e65ba657a20cf178f974fbc5a01b819c990d51b"
+    },
+    {
+      "path": "metrics/horizon_metrics.csv",
+      "bytes": 1113,
+      "sha256": "725a7dd4aaeed25b13665040776147db73ad1304ae232ea5a39c6cb1f3a4af11"
+    },
+    {
+      "path": "metrics/horizon_metrics_by_region.csv",
+      "bytes": 4092,
+      "sha256": "6014d81edfa69d6374551efd41a9e022c607f2401c674205ecad3b538e6b0adb"
+    },
+    {
+      "path": "metrics/horizon_predictions.csv",
+      "bytes": 155877,
+      "sha256": "af2da7841b69f778a59d0fbbf860e58d8f201fd259ea1f7cda46a0dc777a838e"
+    },
+    {
+      "path": "metrics/interval_coverage.csv",
+      "bytes": 262,
+      "sha256": "a240f3b0548d819e096336d75c5a4bab67958168a2e2dd9abba8071da32ba3fa"
+    },
+    {
+      "path": "metrics/one_step_scorecard.csv",
+      "bytes": 2712,
+      "sha256": "2ae44c01166b436317491115aa6dc641b6233e07af5a0d0a14bd7122f9291594"
+    },
+    {
+      "path": "metrics/shap_global.json",
+      "bytes": 1493,
+      "sha256": "8678f97be88a4509266b066881ef26056107ea7850d017950403532f1522696e"
+    },
+    {
+      "path": "metrics/shap_local_examples.json",
+      "bytes": 3382,
+      "sha256": "9c292fd01f4f6a7bded9835ecdcf0aec3053dc71f37ba79e1c091d904e22a2b2"
+    },
+    {
+      "path": "metrics/xgboost_tuning.csv",
+      "bytes": 1918,
+      "sha256": "090b760804b744c693190b5e03faca30dc5aa1195d3839b3b0d10d16e7132e80"
+    },
+    {
+      "path": "prophet_forecasts.csv",
+      "bytes": 4821,
+      "sha256": "59aea92b3421ade9f335ddcbb0156e40b3c12edd630fe955cbd262be342fa77a"
+    },
+    {
+      "path": "prophet_metadata.json",
+      "bytes": 641,
+      "sha256": "a0272bef6849d51128603ccca4c7b6d5a39d09286ca58667a6b5745358c6c12e"
+    },
+    {
+      "path": "segment_centers_standardized.csv",
+      "bytes": 663,
+      "sha256": "316167b37f094b6ed9bc33a51f55e668106aef1695305c9aace0f147cd6d9489"
+    },
+    {
+      "path": "segment_profiles.csv",
+      "bytes": 657,
+      "sha256": "fbd6f126452a47fda25fab1f46655d55f9309249349fb9182d9efdedc29c2125"
+    },
+    {
+      "path": "segments.csv",
+      "bytes": 4355,
+      "sha256": "6b279dca5f0d8b27772fe93feb9aeea466cfc31355899e741d9837c8d5c66977"
+    },
+    {
+      "path": "xgboost.joblib",
+      "bytes": 671023,
+      "sha256": "7b93ff83a9f74c3ca8b36f666504b0a44f79acdd90c397aae38468f56f15e41d"
+    },
+    {
+      "path": "xgboost_metadata.json",
+      "bytes": 1858,
+      "sha256": "443cb784d867dc4c213c2dc2dfa4328839425384263d75452c0ee879be97c26e"
+    },
+    {
+      "path": "xgboost_residual_quantiles.json",
+      "bytes": 509,
+      "sha256": "89f22bede7718514b336eacf95ddbac1048462cf357efe6733a168e94c7bba5a"
+    }
+  ],
+  "total_bytes": 857864
+}

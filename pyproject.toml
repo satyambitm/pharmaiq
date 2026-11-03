@@ -5,6 +5,6 @@ description = "Synthetic pharma sales forecasting, segmentation and budget simul
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "backend/tests"]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]

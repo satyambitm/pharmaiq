@@ -125,7 +125,8 @@ def run_segmentation(panel: pd.DataFrame, seed: int = config.RANDOM_SEED) -> dic
     centers_z.insert(1, "segment_label", centers_z["cluster"].map(names))
     k_table["chosen"] = k_table["k"] == k
     k_table["pca_explained_variance_2d"] = float(pcs.explained_variance_ratio_.sum())
-    return {"segments": segments, "profiles": profiles, "centers_z": centers_z, "k_table": k_table}
+    return {"segments": segments, "profiles": profiles, "centers_z": centers_z, "k_table": k_table,
+            "model": km, "scaler": scaler, "labels": names}
 
 
 def save_artifacts(result: dict[str, pd.DataFrame]) -> None:

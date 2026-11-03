@@ -1,0 +1,21 @@
+{
+  "interval_width": 0.8,
+  "method": "relative-error quantiles (actual/pred - 1) from 2024 recursive backtest, model fit on targets <= 2023-12",
+  "per_horizon": {
+    "1": {
+      "q_low": -0.12131251382785879,
+      "q_high": 0.17271853578035345,
+      "n": 216
+    },
+    "2": {
+      "q_low": -0.1084912674019809,
+      "q_high": 0.1976213877249347,
+      "n": 198
+    },
+    "3": {
+      "q_low": -0.10306231851578672,
+      "q_high": 0.22714369025726466,
+      "n": 180
+    }
+  }
+}
