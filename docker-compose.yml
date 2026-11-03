@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pharmaiq-postgres
+    environment:
+      POSTGRES_USER: pharmaiq_user
+      POSTGRES_PASSWORD: pharmaiq_local
+      POSTGRES_DB: pharmaiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - pharmaiq_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pharmaiq_user -d pharmaiq"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pharmaiq_pgdata:

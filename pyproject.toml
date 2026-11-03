@@ -1,0 +1,10 @@
+[project]
+name = "pharmaiq-lite-plus"
+version = "1.0.0"
+description = "Synthetic pharma sales forecasting, segmentation and budget simulation demo"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+
+# Secrets: only .env.example is tracked
+.env
+
+# Generated data (reproducible from the seeded generator)
+data/raw/
+data/processed/
+
+# Generated model outputs, metrics, figures
+artifacts/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
